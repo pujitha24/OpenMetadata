@@ -154,7 +154,9 @@ class BaseColumnValuesToMatchRegexValidator(BaseTestValidator):
             raise ValueError("test_params is required for columnValuesToMatchRegex._evaluate_test_condition")
         match_regex_count = metric_values[Metrics.regexCount.name]
         count = metric_values[Metrics.valuesCount.name]
-        total_rows = metric_values.get(Metrics.rowCount.name)
+        # Report against the non-null denominator the threshold uses, so the row
+        # percentages sum to 100 and agree with the verdict on nullable columns.
+        total_rows = count if self.test_case.computePassedFailedRowCount else None
 
         matched = self._apply_row_threshold(count - match_regex_count, count)
         failed_count = count - match_regex_count

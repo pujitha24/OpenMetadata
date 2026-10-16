@@ -243,6 +243,32 @@ def test_match_regex_counts_violations_against_the_non_null_values():
     assert evaluation["matched"] is False
 
 
+@pytest.mark.parametrize(
+    "compute_passed_failed_row_count,expected_total_rows",
+    [(True, 50), (False, None)],
+)
+def test_match_regex_reports_rows_against_the_non_null_values(compute_passed_failed_row_count, expected_total_rows):
+    """Reported percentages must use the verdict's denominator (valuesCount), not the table row count"""
+    validator = build_validator(
+        ColumnValuesToMatchRegexValidator,
+        [TestCaseParameterValue(name="regex", value="^[a-z]+$")],
+        compute_passed_failed_row_count,
+    )
+
+    evaluation = evaluate(
+        validator,
+        {
+            Metrics.valuesCount.name: 50,
+            Metrics.regexCount.name: 45,
+            Metrics.rowCount.name: 100,
+        },
+    )
+
+    assert evaluation["total_rows"] == expected_total_rows
+    assert evaluation["passed_rows"] == 45
+    assert evaluation["failed_rows"] == 5
+
+
 def test_in_set_without_match_enum_ignores_the_threshold():
     """Without matchEnum the test only asks for one value in the set, there is nothing to tolerate"""
     validator = build_validator(
