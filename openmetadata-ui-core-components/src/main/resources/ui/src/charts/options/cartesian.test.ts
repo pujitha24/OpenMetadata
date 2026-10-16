@@ -962,6 +962,30 @@ describe('buildBarOption', () => {
     ).toEqual([0, 4, 4, 0]);
   });
 
+  it('puts a second horizontal value axis on top without grid lines', () => {
+    const option = buildBarOption(
+      {
+        ...base,
+        layout: 'horizontal',
+        series: [
+          { key: 'passed', name: 'Passed' },
+          { key: 'failed', name: 'Failed', yAxisIndex: 1 },
+        ],
+        yAxis: [{}, {}],
+      },
+      LIGHT_CHART_THEME
+    );
+    const xAxes = (option.xAxis as XAXisComponentOption[]).map((a) => [
+      a.position,
+      (a.splitLine as { show: boolean }).show,
+    ]);
+
+    expect(xAxes).toEqual([
+      ['bottom', true],
+      ['top', false],
+    ]);
+  });
+
   it('colours each bar from getBarStatus', () => {
     const option = buildBarOption(
       {
