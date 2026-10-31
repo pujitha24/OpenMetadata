@@ -97,6 +97,30 @@ class MetadataCollectionServiceTest {
     assertEquals(TaskResolutionType.Cancelled, resolution.getValue().getType());
   }
 
+  // https://github.com/open-metadata/OpenMetadata/issues/36025
+  @Test
+  void aDeletedAssetClosesEveryOpenTaskOfEveryStage() {
+    final TaskRepository repository = mock(TaskRepository.class);
+    final EntityReference bot = new EntityReference().withName("governance-bot").withType("user");
+    final Domain domain =
+        new Domain()
+            .withId(UUID.randomUUID())
+            .withName("finance")
+            .withFullyQualifiedName("finance");
+    final Task inReview = completionTask(EntityStatus.IN_REVIEW, false);
+    final Task approved = completionTask(EntityStatus.APPROVED, true);
+    when(repository.listOpenTasksByEntityAndType(eq("finance"), any(), anyInt()))
+        .thenReturn(List.of(inReview, approved));
+
+    new MetadataCollectionService(repository, bot).closeTasksOfDeleted(domain);
+
+    final ArgumentCaptor<TaskResolution> resolution = ArgumentCaptor.forClass(TaskResolution.class);
+    verify(repository).resolveTask(eq(inReview), resolution.capture(), eq("governance-bot"));
+    verify(repository).resolveTask(eq(approved), any(), eq("governance-bot"));
+    assertEquals(TaskResolutionType.Cancelled, resolution.getValue().getType());
+    assertEquals(MetadataCollectionService.ASSET_DELETED, resolution.getValue().getComment());
+  }
+
   @Test
   void aRevisionTaskIsNotResolvedThroughTheApi() {
     final Task revision = completionTask(EntityStatus.IN_REVIEW, true);

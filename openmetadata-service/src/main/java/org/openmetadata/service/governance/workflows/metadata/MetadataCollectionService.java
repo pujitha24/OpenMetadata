@@ -71,6 +71,7 @@ public final class MetadataCollectionService {
   static final String CONDITIONS_NOT_MET = "The lifecycle conditions are not met.";
   static final String FILLED_IN = "Everything the stage needs is in place";
   static final String LEFT_STAGE = "The asset left %s";
+  static final String ASSET_DELETED = "The asset was deleted";
   static final String REVISION_TITLE = "Revise and resubmit";
   static final String REVISION_DESCRIPTION =
       "The approval to leave %s was rejected. Make the requested changes: the next edit to the"
@@ -119,6 +120,13 @@ public final class MetadataCollectionService {
           configuration,
           collection(configuration, workflow, node, outstanding));
     }
+  }
+
+  /** A deleted asset has nothing left to fill in, so every task still open for it closes. */
+  public void closeTasksOfDeleted(final EntityInterface<?> entity) {
+    repository
+        .listOpenTasksByEntityAndType(entity.getFullyQualifiedName(), TASK_TYPE, MAX_STALE_TASKS)
+        .forEach(task -> resolve(task, TaskResolutionType.Cancelled, ASSET_DELETED));
   }
 
   /**
