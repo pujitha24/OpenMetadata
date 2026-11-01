@@ -811,6 +811,37 @@ interface Point {
   y: number;
 }
 
+/**
+ * Screen position of a zoom gesture: the pointer for wheel/mouse events, the
+ * midpoint of the touches for a pinch. A TouchEvent has no clientX/clientY.
+ */
+export const getZoomGesturePoint = (
+  event?: MouseEvent | TouchEvent | null
+): Point | undefined => {
+  if (!event) {
+    return undefined;
+  }
+  if ('touches' in event) {
+    const touches = Array.from(
+      event.touches.length ? event.touches : event.changedTouches
+    );
+    if (!touches.length) {
+      return undefined;
+    }
+
+    return {
+      x:
+        touches.reduce((sum, touch) => sum + touch.clientX, 0) / touches.length,
+      y:
+        touches.reduce((sum, touch) => sum + touch.clientY, 0) / touches.length,
+    };
+  }
+
+  return 'clientX' in event
+    ? { x: event.clientX, y: event.clientY }
+    : undefined;
+};
+
 /** The box whose centre is closest to `point`, or undefined when there is none. */
 export const getBoxNearestPoint = <T extends Point & Size>(
   boxes: T[],

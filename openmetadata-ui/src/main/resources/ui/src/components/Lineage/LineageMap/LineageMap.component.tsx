@@ -115,6 +115,7 @@ import LineageSkeleton from '../LineageSkeleton.component';
 import {
   buildLineagePathHighlightIndex,
   getBoxNearestPoint,
+  getZoomGesturePoint,
   getBreadcrumbSceneRequest,
   getConnectedFieldLineagePathHighlight,
   getConnectedLineagePathHighlight,
@@ -1545,11 +1546,9 @@ const LineageMapCanvas = ({
       const isDrillable = (node: Node<SceneFlowNodeData>) =>
         isSceneNodeDrillable(node.data.sceneNode);
 
-      if (event && 'clientX' in event) {
-        const point = reactFlowInstance.screenToFlowPosition({
-          x: event.clientX,
-          y: event.clientY,
-        });
+      const screenPoint = getZoomGesturePoint(event);
+      if (screenPoint) {
+        const point = reactFlowInstance.screenToFlowPosition(screenPoint);
         const underPointer = reactFlowInstance.getIntersectingNodes({
           ...point,
           width: 1,

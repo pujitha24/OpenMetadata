@@ -30,6 +30,7 @@ import {
   getConnectedLineagePathHighlight,
   getDeleteKeyAction,
   getDrillBand,
+  getZoomGesturePoint,
   getDrilledRootBreadcrumb,
   getLensRootLabelKey,
   getLineageMapEmptyState,
@@ -819,6 +820,46 @@ describe('getDeleteKeyAction', () => {
         hasSelectedEdge: false,
       })
     ).toBeUndefined();
+  });
+});
+
+describe('zoom gesture point', () => {
+  const touchEvent = (touches: Array<[number, number]>, changed = touches) =>
+    ({
+      touches: touches.map(([clientX, clientY]) => ({ clientX, clientY })),
+      changedTouches: changed.map(([clientX, clientY]) => ({
+        clientX,
+        clientY,
+      })),
+    } as unknown as TouchEvent);
+
+  it('uses the pointer for wheel and mouse events', () => {
+    expect(
+      getZoomGesturePoint({ clientX: 10, clientY: 20 } as MouseEvent)
+    ).toEqual({ x: 10, y: 20 });
+  });
+
+  it('uses the midpoint of the fingers for a pinch', () => {
+    expect(
+      getZoomGesturePoint(
+        touchEvent([
+          [100, 200],
+          [300, 400],
+        ])
+      )
+    ).toEqual({ x: 200, y: 300 });
+  });
+
+  it('falls back to changed touches when none remain', () => {
+    expect(getZoomGesturePoint(touchEvent([], [[5, 6]]))).toEqual({
+      x: 5,
+      y: 6,
+    });
+  });
+
+  it('has no point for programmatic zoom or an empty touch event', () => {
+    expect(getZoomGesturePoint(null)).toBeUndefined();
+    expect(getZoomGesturePoint(touchEvent([]))).toBeUndefined();
   });
 });
 
